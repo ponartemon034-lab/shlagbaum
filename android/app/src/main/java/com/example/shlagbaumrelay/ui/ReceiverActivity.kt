@@ -6,8 +6,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import androidx.activity.result.contracts.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import com.example.shlagbaumrelay.call.CallPlacer
 import com.example.shlagbaumrelay.data.Bar
 import com.example.shlagbaumrelay.data.BarRegistry
@@ -24,9 +24,14 @@ class ReceiverActivity : AppCompatActivity() {
     private lateinit var bars: BarRegistry
     private val api by lazy { ApiClient(prefs.serverUrl, prefs.authToken) }
 
-    private val reqPerms = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { res ->
-        val ok = res.values.all { it }
-        status(if (ok) "Разрешения выданы" else "Часть разрешений не выдана — реальный звонок может не работать")
+    companion object { private const val REQ_PERMS = 101 }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_PERMS) {
+            val ok = grantResults.isNotEmpty() && grantResults.all { it == android.content.pm.PackageManager.PERMISSION_GRANTED }
+            status(if (ok) "Разрешения выданы" else "Часть разрешений не выдана — реальный звонок может не работать")
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,10 +103,10 @@ class ReceiverActivity : AppCompatActivity() {
     }
 
     private fun requestCallPerms() {
-        reqPerms.launch(arrayOf(Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE))
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE), REQ_PERMS)
     }
     private fun ensureNotifPerm() {
-        if (Build.VERSION.SDK_INT >= 33) reqPerms.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        if (Build.VERSION.SDK_INT >= 33) ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQ_PERMS)
     }
     private fun askIgnoreBattery() {
         // Явно и с пояснением: исключение из оптимизации батареи нужно, чтобы приёмник не убивался.
