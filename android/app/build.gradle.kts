@@ -15,8 +15,9 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "0.1-prototype"
-        // Адрес backend по умолчанию (переопределяется в настройках приложения).
-        buildConfigField("String", "DEFAULT_SERVER", "\"http://10.0.2.2:8080\"")
+        // Адрес backend по умолчанию пустой — пользователь вводит адрес своего сервера.
+        // (10.0.2.2 указывать нельзя: это адрес хоста только внутри эмулятора Android.)
+        buildConfigField("String", "DEFAULT_SERVER", "\"\"")
     }
 
     buildFeatures {
