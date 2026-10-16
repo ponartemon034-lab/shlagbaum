@@ -1,0 +1,14 @@
+# Node
+node_modules/
+*.sqlite
+*.sqlite-*
+data.sqlite*
+# Android / Gradle
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+# Firebase (serverные/клиентские конфиги не коммитим)
+google-services.json
+serviceAccount*.json

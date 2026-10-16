@@ -1,0 +1,41 @@
+// ШАБЛОН. Файл НЕ компилируется (расширение .template), чтобы сборка по умолчанию не требовала
+// Firebase. Чтобы включить FCM-доставку (рекомендуется для продакшена — надёжное пробуждение из
+// Doze высокоприоритетным push):
+//   1) В app/build.gradle.kts раскомментируйте firebase-bom + firebase-messaging-ktx и плагин google-services.
+//   2) В корневом build.gradle.kts добавьте classpath плагина google-services (см. INSTALL.md).
+//   3) Положите google-services.json в app/.
+//   4) Переименуйте этот файл в FcmService.kt и раскомментируйте <service> в AndroidManifest.xml.
+//   5) На сервере задайте GOOGLE_APPLICATION_CREDENTIALS (ключ того же проекта Firebase).
+//
+// Логика идентична pull-пути: push несёт только идентификаторы (commandId/barRef/...), номер
+// шлагбаума берётся локально в OpenCallService.
+
+package com.example.shlagbaumrelay.receiver
+
+import com.example.shlagbaumrelay.call.OpenCallService
+import com.example.shlagbaumrelay.data.Prefs
+import com.example.shlagbaumrelay.net.ApiClient
+import com.google.firebase.messaging.FirebaseMessagingService
+import com.google.firebase.messaging.RemoteMessage
+import kotlin.concurrent.thread
+
+class FcmService : FirebaseMessagingService() {
+
+    override fun onNewToken(token: String) {
+        // Зарегистрировать новый FCM-токен на сервере.
+        val prefs = Prefs(this)
+        if (!prefs.authToken.isNullOrBlank()) {
+            thread { runCatching { ApiClient(prefs.serverUrl, prefs.authToken).updateFcmToken(token) } }
+        }
+    }
+
+    override fun onMessageReceived(msg: RemoteMessage) {
+        val data = msg.data
+        if (data["type"] != "open_command") return
+        val commandId = data["commandId"] ?: return
+        val barRef = data["barRef"].orEmpty()
+        val barLabel = data["barLabel"].orEmpty()
+        // Высокоприоритетный data-push будит приложение; дальше — общий путь инициирования вызова.
+        OpenCallService.start(this, commandId, barRef, barLabel)
+    }
+}
