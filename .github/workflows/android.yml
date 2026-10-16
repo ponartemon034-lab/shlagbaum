@@ -20,8 +20,9 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # ubuntu-latest уже содержит Android SDK (ANDROID_SDK_ROOT/ANDROID_HOME).
+      - name: Show Android SDK location
+        run: echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT ANDROID_HOME=$ANDROID_HOME"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
